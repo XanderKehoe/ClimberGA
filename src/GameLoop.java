@@ -14,11 +14,13 @@ import static org.lwjgl.glfw.GLFW.glfwGetTime;
 
 public class GameLoop{
 	
+	//the best found fitness and the matching movement pattern to reach it.
 	public static double bestFitness = 0;
 	public static JumpDecision[] bestDecisions = new JumpDecision[300];
 	
+	//a list to keep track of all the training threads and total number of threads to dedicate to this program
 	static ArrayList<Game> trainingSessions = new ArrayList<Game>();
-	static int threadCount = 6; //total number of threads to dedicate to this program
+	static int threadCount = 6;
 	
 	static long window;
 	static int inputCooldown = 0;
@@ -28,7 +30,8 @@ public class GameLoop{
 		ArrayList<Obstacle> original_obList = new ArrayList<Obstacle>();
 		
 		generateObList(original_obList, 100);
-				
+		
+		//initialize best movement pattern randomly at first.
 		for (int i = 0; i < bestDecisions.length - 1; i++)
 			bestDecisions[i] = new JumpDecision();
 				
@@ -57,6 +60,9 @@ public class GameLoop{
 
 		// Terminate GLFW and free the error callback
 		glfwTerminate();
+		
+		//close remaining background threads
+		System.exit(0);
 	}
 	
 	public static boolean keyPressed(int x){
@@ -64,6 +70,8 @@ public class GameLoop{
 	}
 	
 	static void generateObList(ArrayList<Obstacle> original_obList, int size) {
+		//generates a random obstacle list for the AI to navigate
+		
 		Stationary baseStation = new Stationary(0, Game.height - 10, 25, 10);
 		original_obList.add(baseStation);
 		
@@ -111,6 +119,7 @@ public class GameLoop{
 	}
 
 	static void setupThreads(ArrayList<Obstacle> original_obList) {
+		//initialize training threads
 		System.out.println("Prepping threads...");
 		for (int i = 0; i < threadCount - 1; i++) { //-1 to save 1 thread for main program
 			System.out.println("Thread: "+i);

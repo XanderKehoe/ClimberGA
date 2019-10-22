@@ -1,6 +1,7 @@
 import java.util.Random;
 
 public class Slider extends Obstacle{
+	//Moving obstacle
 	
 	float xdir;
 	float ydir;

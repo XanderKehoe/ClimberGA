@@ -32,18 +32,18 @@ public class Game implements Runnable{
 	public static float mutationRate = 0.05f;
 	public static final float grav = 0.2f;
 	
-	public ArrayList<Obstacle> obList;
-	public ArrayList<Obstacle> original_obList;
-	public ArrayList<Climber> climberList;
-	public Climber bestClimber;
+	public ArrayList<Obstacle> obList; //list of the current obstacles
+	public ArrayList<Obstacle> original_obList; //list of the original obstacles to reset back to
+	public ArrayList<Climber> climberList; //list of all the climbers
+	public Climber bestClimber; //the best climber from the previous generation
 	public static Goal goal;
 	
 	public static boolean madeItToEnd = false;
 	
 	int N = 1000; //number of climbers
-	int generation = 0;
+	int generation = 0; //how many generations have passed
 	
-	boolean doForcedDecisions = false;
+	boolean doForcedDecisions = false; //whether or not to just directly copy parent movement patterns after an alloted time.
 	int forcedIndex = 0; //how many indices of the best climber to directly copy.
 	
 	boolean doDraw = false;
@@ -57,7 +57,7 @@ public class Game implements Runnable{
 		obList = cloneObList();
 		
 		//if training thread, generate all the initial climbers
-		//else just setup the one "overall best" climber
+		//else just setup the one "overall best" climber, this is what you actually see on screen.
 		if (training) {
 			climberList = new ArrayList<Climber>();
 			for (int i = 0; i < N; i++) {
@@ -75,6 +75,7 @@ public class Game implements Runnable{
 	public boolean keyPressed(int x){
 		return glfwGetKey(window, x) == GLFW_PRESS;
 	}
+	
 	// returns window id
 	public long init()
 	{
@@ -92,7 +93,7 @@ public class Game implements Runnable{
 		GL.createCapabilities();
 		glfwSwapInterval(1);
 		
-		// screen clear is white (this could go in drawFrame if you wanted it to change
+		// screen clear is white (this could go in drawFrame if you wanted it to change)
 		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 		
 		// set projection to dimensions of window
@@ -112,9 +113,8 @@ public class Game implements Runnable{
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 		
-		for (Obstacle thisOb : obList){
+		for (Obstacle thisOb : obList)
 			thisOb.update(true);
-		}
 		
 		//keep bestClimber updated with the best found decisions
 		bestClimber.decision = GameLoop.bestDecisions;
@@ -134,6 +134,7 @@ public class Game implements Runnable{
 				for (int j = 0; j < GameLoop.trainingSessions.get(i).climberList.size(); j++)
 					GameLoop.trainingSessions.get(i).climberList.get(j).draw();
 		
+		//lazy workaround code to ensure 'doDraw' is switched once and only once per key press
 		if (keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_UP)){
 			if (GameLoop.inputCooldown == 0){
 				doDraw = !doDraw;
@@ -148,9 +149,9 @@ public class Game implements Runnable{
 	
 	public void train() {
 		while (true) {
-			for (Obstacle thisOb : obList){
+			
+			for (Obstacle thisOb : obList)
 				thisOb.update(false);
-			}
 			
 			for (Climber thisClimber : climberList)
 				thisClimber.update(false, obList);
@@ -161,10 +162,9 @@ public class Game implements Runnable{
 					allDead = false;
 					break;
 				}
-			
-			if (allDead) {
-				evolveGeneration();
-			}
+		
+			if (allDead) 
+				performGeneticAlgorithm();
 		}
 	}
 	
@@ -177,12 +177,12 @@ public class Game implements Runnable{
 		return clone;
 	}
 	
-	public void evolveGeneration() {
+	public void performGeneticAlgorithm() {
 		generation++;
 		
 		ArrayList<Climber> nextGen = new ArrayList<Climber>(N);
 		
-		//elitism (add the best from this generation to next generation)
+		//elitism (pt. 1) (add the best from this generation to next generation)
 		double bestFitness = 0;
 		int bestIndex = 0;
 		double sumFitness = 0;
@@ -193,11 +193,6 @@ public class Game implements Runnable{
 				bestIndex = i;
 			}
 		}
-		
-		double avgFitness = sumFitness / climberList.size();
-		//System.out.println("\tAverage Fitness: "+avgFitness);
-		//System.out.println("\tBest Fitness: " + bestFitness);
-		//System.out.println("\tForced Index: " + forcedIndex);
 		
 		for (int i = 0; i < N - 1; i++) { //N - 1 to make room for elitism
 			Climber parent1 = chooseOnWeight(climberList);
@@ -213,6 +208,7 @@ public class Game implements Runnable{
 			nextGen.add(child);
 		}
 		
+		double avgFitness = sumFitness / climberList.size();
 		
 		if ((generation % 15 == 0 || bestFitness / 10 > avgFitness) 
 		&& (3*forcedIndex) / 4 < climberList.get(bestIndex).closestDecisionIndex
@@ -221,6 +217,7 @@ public class Game implements Runnable{
 		
 		Climber bestClimber;
 		
+		//elitism (pt. 2)
 		//if this climber is better than overall best climber, make this the new best climber
 		//else put the overall best climber into the nextGen
 		if (climberList.get(bestIndex).fitness > GameLoop.bestFitness) {

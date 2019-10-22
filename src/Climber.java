@@ -3,35 +3,41 @@ import java.util.ArrayList;
 import org.lwjgl.opengl.GL11;
 
 public class Climber {
+	//x-y coords and width/height.
 	float x;
 	float y;
 	float w;
 	float h;
 	
+	//velocity x and y components
 	float xvel = 0;
 	float yvel = 0;
 	
 	boolean airbourne = true;
-	boolean hitLava = false;
-	boolean dead = false;
-	boolean best = false;
+	boolean hitLava = false; //whether or not the last obstacle touched was a lava obstacle
+	boolean dead = false; //fell off map
+	boolean best = false; //used only to display different color for best Climber from previous generation
 	
-	JumpDecision[] decision = new JumpDecision[300];
-	int decisionIndex = 0;
+	JumpDecision[] decision = new JumpDecision[300]; //the 'DNA' for genetic algorithm, determines movement pattern.
+	int decisionIndex = 0; //used to keep track of how far into 'jumping sequence' this climber is.
 	
-	double fitness = 0;
-	double closestDistance = Double.POSITIVE_INFINITY;
-	int closestDecisionIndex = 0;
+	double fitness = 0; //a measurement of how close this climber got to the goal.
+	double closestDistance = Double.POSITIVE_INFINITY; //initializing to maximum possible value.
+	int closestDecisionIndex = 0; //when fitness is maximized, record the index, anything beyond it will later be discarded
 	
+	//basic constructor
 	public Climber(float x, float y, float w, float h) {
 		this.x = x;
 		this.y = y;
 		this.w = w;
 		this.h = h;
 		
+		//initialing with random movement pattern.
 		for (int i = 0; i < decision.length - 1; i++)
 			decision[i] = new JumpDecision();
 	}
+	
+	//a constructor for merging two climbers
 	public Climber(float x, float y, float w, float h, Climber parent1, Climber parent2) {
 		this.x = x;
 		this.y = y;
@@ -39,16 +45,19 @@ public class Climber {
 		this.h = h;
 		
 		//choose smallest decision index from parents
-			//doing this so that future random data doesn't get merged and averaged for no reason
-		int decisionLength = parent1.decisionIndex;
+		//doing this so that future random data doesn't get merged and averaged for no reason
+		int decisionLength = parent1.closestDecisionIndex;
 		if (parent2.closestDecisionIndex < decisionLength)
 			decisionLength = parent2.closestDecisionIndex;
 		
+		//merging parents movement pattern up to closestDecisionIndex
 		for (int i = 0; i < decisionLength; i++)
 			decision[i] = new JumpDecision(parent1.decision[i], parent2.decision[i]);
-		for (int i = decisionLength; i < decision.length - 1; i++) {
+		
+		//randomize the rest of the movement pattern
+		for (int i = decisionLength; i < decision.length - 1; i++) 
 			decision[i] = new JumpDecision();
-		}
+		
 	}
 	
 	void update(boolean doDraw, ArrayList<Obstacle> obList) {
@@ -82,6 +91,7 @@ public class Climber {
 					yvel += Game.grav;
 				}
 			}
+			
 			else {
 				if (decisionIndex < decision.length - 1)
 					performJump();
@@ -91,15 +101,14 @@ public class Climber {
 			
 			checkDeath();
 			
-			updateFitness();
+			updateClosestDecision();
 			
 			if (doDraw)
 				draw();
 		}
 	}
 	
-	void updateFitness() {
-		
+	void updateClosestDecision() {
 		double distanceToGoal = Game.goal.distanceTo(x, y);
 		if (distanceToGoal < closestDistance) {
 			closestDistance = distanceToGoal;
@@ -111,10 +120,7 @@ public class Climber {
 		if (!best)
 			GL11.glColor3f(0,1,0);
 		else
-		{
 			GL11.glColor3f(1,0,1);
-			//System.out.println("\t\t"+x+" : "+y);
-		}
 
         GL11.glBegin(GL11.GL_QUADS);
         GL11.glVertex2f(x, y);
@@ -138,7 +144,6 @@ public class Climber {
 	}
 
 	void performJump() {
-
 		xvel = decision[decisionIndex].x * decision[decisionIndex].power;
 		yvel = decision[decisionIndex].y * decision[decisionIndex].power;
 		airbourne = true;
@@ -148,14 +153,16 @@ public class Climber {
 	void checkDeath() {
 		if (y > Game.height)
 			killAndCalcFitness();
-		//check for fireball collision here later
 	}
 	
 	void killAndCalcFitness() {
 		dead = true;
 		fitness = Math.pow((Math.sqrt(Math.pow(Game.width, 2) + Math.pow(Game.height, 2)))/closestDistance, 10);
 		if (closestDistance < 20) { //made it to the end!!
+			//exponentially increase fitness inversely to amount of decisions had to be made to accomplish this
+			//this challenges the AI to find a faster route to the end
 			fitness *= Math.pow(closestDistance, (float) (decision.length - decisionIndex) / (float) 10);
+			
 			if (!Game.madeItToEnd){
 				System.out.println("MADE IT TO THE END!!!");
 				Game.madeItToEnd = true;

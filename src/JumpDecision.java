@@ -7,6 +7,7 @@ public class JumpDecision {
 	
 	final float maxPower = 6;
 	
+	//randomized constructor
 	public JumpDecision() {
 		Random rand = new Random();
 		
@@ -17,6 +18,7 @@ public class JumpDecision {
 			this.power = maxPower;
 	}
 	
+	//basic constructor
 	public JumpDecision(float x, float y, float power) {
 		this.x = x;
 		this.y = y;
@@ -64,7 +66,7 @@ public class JumpDecision {
 				this.power = Game.grav + rand.nextFloat() * maxPower; //random number between grav and 10 + grav;
 		}
 		
-		//contraining vals
+		//constraining vals
 		if (this.x > 1)
 			this.x = 1;
 		else if (this.x < -1)
@@ -75,6 +77,8 @@ public class JumpDecision {
 			this.y = -1;
 		if (this.power > maxPower)
 			this.power = maxPower;
+		else if (this.power < 0)
+			this.power = 0;
 	}
 	
 	private float mutateValue(float val, float mutationRate) {

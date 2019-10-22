@@ -16,7 +16,6 @@ public class Obstacle {
 	}
 	
 	void update(boolean doDraw) {
-		
 		if (doDraw)
 			draw();
 	}
