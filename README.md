@@ -8,4 +8,4 @@ Each of the agents that I call 'Climbers' have a simple goal, reach the blue box
 
 The platforms (both stationary and moving) I refer to as 'obstacles'. The red obstacles are 'lava' obstacles, if a climber touches a lava obstacle more than once without touching a normal obstacle inbetween, it will die. 
 
-If you wish to see the other climbers, press the up arrow key. It will show you a rough outline of their behavior and the paths they're exploring
+If you wish to see the other climbers, press the up arrow key. It will show you a rough outline of their behavior and the paths they're exploring.
