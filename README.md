@@ -1,6 +1,6 @@
 # ClimberGA
 
-A self-learning AI that teaches itself how to navigate a randomly generated complex obstacle course quickly by utilizing multi-threading.
+A self-learning AI that teaches itself how to navigate a randomly generated complex environment quickly by utilizing multi-threading.
 
 Majority of OpenGL related code came from my Intro to Video Game Design course that our professor provided for us to use.
 
